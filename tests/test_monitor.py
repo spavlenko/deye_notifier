@@ -53,9 +53,12 @@ class DetectTest(unittest.TestCase):
     def test_relay_status(self):
         on = device(1, relay="Pull-in", GridVoltageL1=230)
         self.assertEqual(detect(on, 100).state, GridState.ON)
-        # Relay open while grid side still shows voltage -> house is off-grid.
+        # Relay open while grid side still shows voltage (e.g. voltage out of the
+        # inverter's range) -> the grid is still there, not an outage.
         self.assertEqual(detect(device(1, relay="Pull-out", GridVoltageL1=230), 100).state,
-                         GridState.OFF)
+                         GridState.ON)
+        self.assertEqual(detect(device(1, relay="Pull-out", GridVoltageL1=262), 100).state,
+                         GridState.ON)
         # Relay only, no voltage fields.
         self.assertEqual(detect(device(1, relay="Pull-in"), 100).state, GridState.ON)
         self.assertEqual(detect(device(1, relay="Break"), 100).state, GridState.OFF)

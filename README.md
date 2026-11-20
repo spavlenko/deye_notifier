@@ -54,11 +54,9 @@ The log is `data/monitor.log`, rotated at 10 MB. On macOS the script also runs `
 
 ## How detection works
 
-- `device/latest` returns the inverter's live data. The grid is **OFF** if either of these is true:
-  - `GridRelayStatus` is anything other than `Pull-in`, meaning the inverter has disconnected from the grid and the house runs on battery.
-  - All grid-side voltages (`GridVoltageL1..L3`) are below `GRID_VOLTAGE_THRESHOLD` (default 100 V).
-
-  Otherwise it is **ON**. `GridStatus` (e.g. `Purchasing energy`) is written to the log for reference.
+- `device/latest` returns the inverter's live data. The grid is **OFF** when all grid-side voltages (`GridVoltageL1..L3`) are below `GRID_VOLTAGE_THRESHOLD` (default 100 V), and **ON** otherwise.
+  - `GridRelayStatus` alone doesn't count as an outage. The inverter also opens its grid relay when the voltage is out of its allowed range (too high or too low), and the grid is still there then. The relay status is used only if the inverter reports no grid voltage fields: `Pull-in` means ON, anything else means OFF.
+  - `GridStatus` (e.g. `Purchasing energy`) is written to the log for reference.
 - Grid power (`wirePower`) is *not* used, because 0 W also happens when the grid is present but idle.
 - Each new data point (by `collectionTime`) is processed once. An outage starts at the first OFF reading and ends at the next ON reading. Timestamps come from the inverter, not from the poll.
 - The battery alert fires once when `SOC` drops below `BATTERY_LOW_SOC` (default 45%), then re-arms when the charge is back to that value + 5%.

@@ -136,11 +136,13 @@ def _detect_grid(
     threshold: float,
     keys: tuple[str, ...] = (),
 ) -> Reading:
-    """Combine the inverter's grid relay status with grid-side voltage.
+    """Decide grid presence from grid-side voltage, falling back to the relay status.
 
-    - all grid voltages below threshold          -> OFF (no voltage = no grid)
-    - GridRelayStatus present and not "Pull-in"  -> OFF (inverter disconnected from grid)
-    - otherwise, if we have relay or voltage     -> ON
+    - any grid voltage at/above threshold        -> ON, even if the relay is open
+      (the inverter drops the relay when voltage/frequency is out of its allowed range,
+      but the city grid is still there)
+    - grid voltages present, all below threshold -> OFF (no voltage = no grid)
+    - no voltage fields: GridRelayStatus "Pull-in" -> ON, anything else -> OFF
     """
     if not device:
         return Reading(GridState.UNKNOWN, None, "no device data")
@@ -171,8 +173,8 @@ def _detect_grid(
             "and set GRID_VOLTAGE_KEYS",
         )
 
-    if voltages and max(voltages.values()) < threshold:
-        return Reading(GridState.OFF, collected, detail)
-    if relay is not None and relay.lower() not in RELAY_CONNECTED:
-        return Reading(GridState.OFF, collected, detail)
-    return Reading(GridState.ON, collected, detail)
+    if voltages:
+        on = max(voltages.values()) >= threshold
+    else:
+        on = relay.lower() in RELAY_CONNECTED
+    return Reading(GridState.ON if on else GridState.OFF, collected, detail)
