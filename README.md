@@ -35,6 +35,8 @@ Sample `report` output:
 2 outage(s), 5h 18m without grid in the last 30 days.
 ```
 
+Set `TZ` in `.env` (default in the example: `Europe/Kyiv`) so alert times and «Сьогодні» in statistics use local time, even on a UTC server.
+
 ### Background service
 
 Use `deye.sh` to run the monitor and bot in the background with `nohup`:

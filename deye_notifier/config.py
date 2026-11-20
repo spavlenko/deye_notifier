@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -48,6 +49,8 @@ class Config:
     @classmethod
     def from_env(cls, env_file: Path | None = None, require_deye: bool = True) -> "Config":
         load_dotenv(env_file or Path.cwd() / ".env")
+        if os.environ.get("TZ") and hasattr(time, "tzset"):
+            time.tzset()  # apply TZ from .env (e.g. Europe/Kyiv) to all timestamps
 
         def req(name: str) -> str:
             value = os.environ.get(name, "").strip()
